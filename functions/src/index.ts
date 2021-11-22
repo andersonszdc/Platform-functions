@@ -201,6 +201,19 @@ const manageSubscription = async (
 };
 
 const insertInvoiceRecord = async (invoice: Stripe.Invoice) => {
+  if (invoice.billing_reason == "subscription_create") {
+    const subscriptionId = invoice.subscription;
+    const paymentIntentId = invoice.payment_intent;
+    const paymentIntent = await stripe
+        .paymentIntents
+        .retrieve(paymentIntentId as string);
+    await stripe.subscriptions.update(
+      subscriptionId as string,
+      {
+        default_payment_method: paymentIntent.payment_method as string,
+      },
+    );
+  }
   const usersSnap = await admin
       .firestore()
       .collection("users")
